@@ -2,11 +2,31 @@ import React, { useState, useEffect } from "react";
 import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import Picker from "react-native-picker-select";
 import axios from "axios";
+import { useNavigation } from "@react-navigation/native";
 
 export default function CategorySelection() {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedSubCategory, setSelectedSubCategory] = useState(null);
+  const navigation = useNavigation();
+  const [selectedCategoryUuid, setSelectedCategoryUuid] = useState(null);
+  const [selectedSubCategoryUuid, setSelectedSubCategoryUuid] = useState(null);
+
+  const handleSearch = () => {
+    console.log("Selected category UUID:", selectedCategoryUuid);
+    console.log("Selected sub-category UUID:", selectedSubCategoryUuid);
+    if (
+      selectedCategoryUuid &&
+      (selectedSubCategoryUuid || category.sub_categories.length === 0)
+    ) {
+      navigation.navigate("ProductDetailsComponent", {
+        categoryUuid: selectedCategoryUuid,
+        subCategoryUuid: selectedSubCategoryUuid,
+      });
+    } else {
+      console.error("You must select both a category and a sub-category.");
+    }
+  };
 
   useEffect(() => {
     fetchCategories();
@@ -45,10 +65,17 @@ export default function CategorySelection() {
         selectedValue={selectedCategory}
         style={styles.picker}
         onValueChange={(itemValue, itemIndex) => {
-          setSelectedCategory(itemValue);
           const category = categories.find((cat) => cat.name === itemValue);
-          if (category && category.sub_categories.length > 0) {
-            setSelectedSubCategory(category.sub_categories[0].name);
+          if (category) {
+            setSelectedCategory(itemValue);
+            setSelectedCategoryUuid(category.uuid);
+            if (category.sub_categories.length > 0) {
+              setSelectedSubCategory(category.sub_categories[0].name);
+              setSelectedSubCategoryUuid(category.sub_categories[0].uuid);
+            } else {
+              setSelectedSubCategory(null);
+              setSelectedSubCategoryUuid(null);
+            }
           }
         }}
         items={categories.map((category) => ({
@@ -73,8 +100,8 @@ export default function CategorySelection() {
               }))}
           />
         )}
-      <TouchableOpacity style={styles.button}>
-        <Text style={styles.buttonText}>Αναζήτηση</Text>
+      <TouchableOpacity style={styles.button} onPress={handleSearch}>
+        <Text style={styles.buttonText}>Search</Text>
       </TouchableOpacity>
     </View>
   );
