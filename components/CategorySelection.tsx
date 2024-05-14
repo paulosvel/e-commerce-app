@@ -15,10 +15,7 @@ export default function CategorySelection() {
   const handleSearch = () => {
     console.log("Selected category UUID:", selectedCategoryUuid);
     console.log("Selected sub-category UUID:", selectedSubCategoryUuid);
-    if (
-      selectedCategoryUuid &&
-      (selectedSubCategoryUuid || category.sub_categories.length === 0)
-    ) {
+    if (selectedCategoryUuid && selectedSubCategoryUuid) {
       navigation.navigate("ProductDetailsComponent", {
         categoryUuid: selectedCategoryUuid,
         subCategoryUuid: selectedSubCategoryUuid,
@@ -27,7 +24,6 @@ export default function CategorySelection() {
       console.error("You must select both a category and a sub-category.");
     }
   };
-
   useEffect(() => {
     fetchCategories();
   }, []);

@@ -25,7 +25,17 @@ export default function HomeStack() {
       <Stack.Screen
         name="ProductDetailsComponent"
         component={ProductDetailsComponent}
-        options={{ headerShown: true, headerTitle: "ProductDetailsComponent" }}
+        options={{
+          headerShown: true,
+          headerTitle: "",
+          headerStyle: {
+            backgroundColor: "#007AFF",
+          },
+          headerTintColor: "#fff",
+          headerTitleStyle: {
+            fontWeight: "bold",
+          },
+        }}
       />
     </Stack.Navigator>
   );
