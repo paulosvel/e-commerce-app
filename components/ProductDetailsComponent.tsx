@@ -18,7 +18,10 @@ export default function ProductDetailsComponent({ route }) {
   const [products, setProducts] = useState([]);
   const [merchants, setMerchants] = useState([]);
   const [selectedMerchant, setSelectedMerchant] = useState([]);
+  const [subSubCategories, setSubSubCategories] = useState([]);
+  const [selectedSubSubCategories, setSelectedSubSubCategories] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -30,6 +33,23 @@ export default function ProductDetailsComponent({ route }) {
         setMerchants(data.merchants);
         setAllProducts(data.products);
         filterProducts(data.products);
+
+        // Extract sub_sub_categories based on the provided structure
+        const subCategoriesData = data.categories.find(
+          (category) => category.uuid === parseInt(categoryUuid)
+        )?.sub_categories;
+
+        const relevantSubCategories = subCategoryUuid
+          ? subCategoriesData?.filter(
+              (subCat) => subCat.uuid === parseInt(subCategoryUuid)
+            )
+          : subCategoriesData;
+
+        const extractedSubSubCategories = relevantSubCategories
+          ? relevantSubCategories.flatMap((subCat) => subCat.sub_sub_categories)
+          : [];
+
+        setSubSubCategories(extractedSubSubCategories);
       } catch (error) {
         console.error("Failed to fetch data:", error);
       }
@@ -37,6 +57,11 @@ export default function ProductDetailsComponent({ route }) {
 
     fetchData();
   }, [categoryUuid, subCategoryUuid]);
+
+  useEffect(() => {
+    filterProducts(allProducts);
+  }, [selectedMerchant, selectedSubSubCategories, allProducts]);
+
   const toggleMerchant = (merchantUuid) => {
     if (selectedMerchant.includes(merchantUuid)) {
       setSelectedMerchant(selectedMerchant.filter((id) => id !== merchantUuid));
@@ -45,9 +70,19 @@ export default function ProductDetailsComponent({ route }) {
     }
   };
 
-  useEffect(() => {
-    filterProducts(allProducts);
-  }, [selectedMerchant, allProducts]);
+  const toggleSubSubCategory = (subSubCategoryUuid) => {
+    if (selectedSubSubCategories.includes(subSubCategoryUuid)) {
+      setSelectedSubSubCategories(
+        selectedSubSubCategories.filter((id) => id !== subSubCategoryUuid)
+      );
+    } else {
+      setSelectedSubSubCategories([
+        ...selectedSubSubCategories,
+        subSubCategoryUuid,
+      ]);
+    }
+  };
+
   const getMinimumPrice = (prices, selectedMerchant) => {
     if (!prices || prices.length === 0) return "N/A";
 
@@ -79,7 +114,16 @@ export default function ProductDetailsComponent({ route }) {
             )
           : true;
 
-      return isInCategory && isInMerchant;
+      const isInSubSubCategory =
+        selectedSubSubCategories.length > 0
+          ? product.sub_categories?.some((subCat) =>
+              subCat.sub_sub_categories?.some((subSubCat) =>
+                selectedSubSubCategories.includes(subSubCat.uuid)
+              )
+            )
+          : true;
+
+      return isInCategory && isInMerchant && isInSubSubCategory;
     });
 
     setProducts(filteredProducts);
@@ -168,6 +212,27 @@ export default function ProductDetailsComponent({ route }) {
                   )}
                 </TouchableOpacity>
               ))}
+              <View style={styles.divider} />
+              {subSubCategories.map((subSubCategory) => (
+                <TouchableOpacity
+                  key={subSubCategory.uuid}
+                  onPress={() => toggleSubSubCategory(subSubCategory.uuid)}
+                  style={styles.merchantItem}
+                >
+                  <Text style={styles.merchantText}>{subSubCategory.name}</Text>
+                  {selectedSubSubCategories.includes(subSubCategory.uuid) ? (
+                    <AntDesign name="checkcircle" size={24} color="#E63946" />
+                  ) : (
+                    <View style={styles.circle}>
+                      <AntDesign
+                        name="checkcircle"
+                        size={24}
+                        color="transparent"
+                      />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))}
             </ScrollView>
             <View
               style={{
@@ -179,7 +244,10 @@ export default function ProductDetailsComponent({ route }) {
             >
               <TouchableOpacity
                 style={styles.clearButton}
-                onPress={() => setSelectedMerchant([])}
+                onPress={() => {
+                  setSelectedMerchant([]);
+                  setSelectedSubSubCategories([]);
+                }}
               >
                 <Text style={styles.clearButtonText}>Καθαρισμός</Text>
               </TouchableOpacity>
@@ -196,6 +264,7 @@ export default function ProductDetailsComponent({ route }) {
     </>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -259,7 +328,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#888",
   },
-
   modalView: {
     flex: 1,
     backgroundColor: "white",
@@ -310,5 +378,10 @@ const styles = StyleSheet.create({
   merchantList: {
     padding: 10,
     backgroundColor: "#FFF",
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "#ccc",
+    marginVertical: 10,
   },
 });
