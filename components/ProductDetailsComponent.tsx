@@ -7,17 +7,18 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
+  Modal,
 } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { Feather, AntDesign } from "@expo/vector-icons";
+import FilterButton from "./FilterButton";
 
 export default function ProductDetailsComponent({ route }) {
   const { categoryUuid, subCategoryUuid } = route.params;
   const [allProducts, setAllProducts] = useState([]);
   const [products, setProducts] = useState([]);
   const [merchants, setMerchants] = useState([]);
-  const [showMerchants, setShowMerchants] = useState(false);
-  const [selectedMerchant, setSelectedMerchant] = useState(null);
-
+  const [selectedMerchant, setSelectedMerchant] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -36,10 +37,32 @@ export default function ProductDetailsComponent({ route }) {
 
     fetchData();
   }, [categoryUuid, subCategoryUuid]);
+  const toggleMerchant = (merchantUuid) => {
+    if (selectedMerchant.includes(merchantUuid)) {
+      setSelectedMerchant(selectedMerchant.filter((id) => id !== merchantUuid));
+    } else {
+      setSelectedMerchant([...selectedMerchant, merchantUuid]);
+    }
+  };
 
   useEffect(() => {
     filterProducts(allProducts);
-  }, [selectedMerchant]);
+  }, [selectedMerchant, allProducts]);
+  const getMinimumPrice = (prices, selectedMerchant) => {
+    if (!prices || prices.length === 0) return "N/A";
+
+    if (selectedMerchant) {
+      const merchantPrice = prices.find(
+        (price) => price.merchant_uuid === selectedMerchant
+      );
+      if (merchantPrice) {
+        return merchantPrice.price.toFixed(2);
+      }
+    }
+
+    const minPrice = Math.min(...prices.map((price) => price.price));
+    return minPrice.toFixed(2);
+  };
 
   const filterProducts = (productsToFilter) => {
     const filteredProducts = productsToFilter.filter((product) => {
@@ -48,11 +71,14 @@ export default function ProductDetailsComponent({ route }) {
         product.category.includes(parseInt(categoryUuid)) &&
         (!subCategoryUuid ||
           product.category.includes(parseInt(subCategoryUuid)));
-      const isInMerchant = selectedMerchant
-        ? product.prices.some(
-            (price) => price.merchant_uuid === selectedMerchant
-          )
-        : true;
+
+      const isInMerchant =
+        selectedMerchant.length > 0
+          ? product.prices.some((price) =>
+              selectedMerchant.includes(price.merchant_uuid)
+            )
+          : true;
+
       return isInCategory && isInMerchant;
     });
 
@@ -78,9 +104,13 @@ export default function ProductDetailsComponent({ route }) {
             />
             <View style={styles.productInfo}>
               <Text style={styles.productName}>{product.name}</Text>
-              <Text style={styles.productPrice}>{product.price}</Text>
+
               <Text style={styles.merchantName}>
-                Available from {getMerchantCount(product)} merchants
+                Σε {getMerchantCount(product)} αλυσίδες
+              </Text>
+              <Text style={styles.productPrice}>
+                <Text style={{ color: "#888" }}>από </Text>
+                {getMinimumPrice(product.prices, selectedMerchant)}€
               </Text>
             </View>
             <TouchableOpacity style={styles.cartIcon}>
@@ -88,35 +118,84 @@ export default function ProductDetailsComponent({ route }) {
             </TouchableOpacity>
           </View>
         ))}
+
         {products.length === 0 && (
           <Text style={styles.noProductsText}>
             No products found for the selected category and sub-category.
           </Text>
         )}
       </ScrollView>
-      <TouchableOpacity
-        onPress={() => setShowMerchants(!showMerchants)}
-        style={styles.filterButton}
-      >
-        <Text>Filter</Text>
-      </TouchableOpacity>
-      {showMerchants && (
-        <View style={styles.merchantList}>
-          {merchants.map((merchant) => (
-            <TouchableOpacity
-              key={merchant.merchant_uuid}
-              onPress={() => setSelectedMerchant(merchant.merchant_uuid)}
-              style={styles.merchantItem}
+      <FilterButton onPress={() => setModalVisible(true)} />
+
+      <Modal visible={modalVisible} animationType="slide" transparent={true}>
+        <View style={styles.modalView}>
+          <View style={{ marginTop: 10 }}>
+            <View
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+              }}
             >
-              <Text style={styles.merchantText}>{merchant.display_name}</Text>
-            </TouchableOpacity>
-          ))}
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setModalVisible(false)}
+              >
+                <AntDesign name="closecircle" size={24} color="black" />
+              </TouchableOpacity>
+              <Text style={{ fontSize: 24 }}>Φίλτρα</Text>
+            </View>
+            <ScrollView>
+              {merchants.map((merchant) => (
+                <TouchableOpacity
+                  key={merchant.merchant_uuid}
+                  onPress={() => toggleMerchant(merchant.merchant_uuid)}
+                  style={styles.merchantItem}
+                >
+                  <Text style={styles.merchantText}>
+                    {merchant.display_name}
+                  </Text>
+                  {selectedMerchant.includes(merchant.merchant_uuid) ? (
+                    <AntDesign name="checkcircle" size={24} color="#E63946" />
+                  ) : (
+                    <View style={styles.circle}>
+                      <AntDesign
+                        name="checkcircle"
+                        size={24}
+                        color="transparent"
+                      />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <View
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "center",
+                marginTop: "5%",
+              }}
+            >
+              <TouchableOpacity
+                style={styles.clearButton}
+                onPress={() => setSelectedMerchant([])}
+              >
+                <Text style={styles.clearButtonText}>Καθαρισμός</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.resultsButton}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.resultsButtonText}>Αποτελέσματα</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
-      )}
+      </Modal>
     </>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -140,25 +219,34 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   productImage: {
-    width: 100,
-    height: 100,
+    width: 60,
+    height: 60,
     borderRadius: 5,
+  },
+  circle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    justifyContent: "center",
+    alignItems: "center",
   },
   productInfo: {
     flex: 1,
     paddingLeft: 10,
   },
   productName: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "bold",
     color: "#333",
   },
   productPrice: {
     fontSize: 14,
-    color: "#666",
+    color: "#E63946",
   },
   cartIcon: {
-    padding: 20,
+    padding: 10,
     borderRadius: 25,
     backgroundColor: "#007AFF",
   },
@@ -168,25 +256,59 @@ const styles = StyleSheet.create({
     color: "#666",
   },
   merchantName: {
-    fontSize: 12,
+    fontSize: 14,
     color: "#888",
   },
-  filterButton: {
-    padding: 10,
-    backgroundColor: "#DDD",
+
+  modalView: {
+    flex: 1,
+    backgroundColor: "white",
+    paddingTop: "20%",
+  },
+  closeButton: {
+    alignSelf: "flex-start",
+    margin: 16,
+  },
+  merchantItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+  },
+  merchantText: {
+    fontSize: 16,
+  },
+  clearButton: {
+    backgroundColor: "#E63946",
+    marginHorizontal: 20,
+    marginVertical: 10,
+    padding: 12,
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  clearButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  resultsButton: {
+    backgroundColor: "#007AFF",
+    marginHorizontal: 20,
+    marginVertical: 10,
+    padding: 12,
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  resultsButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
   },
   merchantList: {
     padding: 10,
     backgroundColor: "#FFF",
-  },
-  merchantItem: {
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#CCC",
-  },
-  merchantText: {
-    fontSize: 16,
-    color: "#000",
   },
 });
