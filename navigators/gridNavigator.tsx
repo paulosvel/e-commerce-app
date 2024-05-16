@@ -10,7 +10,7 @@ export default function HomeStack() {
       screenOptions={{
         headerShown: false,
         title: "",
-        headerShadowVisible: false, // applied here
+        headerShadowVisible: false,
         headerBackTitleVisible: false,
       }}
     >
@@ -27,7 +27,7 @@ export default function HomeStack() {
         component={ProductDetailsComponent}
         options={{
           headerShown: true,
-          headerTitle: "",
+          headerTitle: "Αποτελέσματα Αναζήτησης",
           headerStyle: {
             backgroundColor: "#007AFF",
           },

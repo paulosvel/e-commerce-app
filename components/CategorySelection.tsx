@@ -2,27 +2,36 @@ import React, { useState, useEffect } from "react";
 import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import axios from "axios";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, NavigationProp } from "@react-navigation/native";
+import { Feather } from "@expo/vector-icons";
+
+type ProductDetailsParams = {
+  categoryUuid: number;
+  subCategoryUuid: number;
+  selectedCategoryName: string;
+};
 
 export default function CategorySelection() {
   const [categories, setCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const [selectedSubCategory, setSelectedSubCategory] = useState(null);
-  const navigation = useNavigation();
-  const [selectedCategoryUuid, setSelectedCategoryUuid] = useState(null);
-  const [selectedSubCategoryUuid, setSelectedSubCategoryUuid] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+  const [selectedSubCategory, setSelectedSubCategory] = useState<number | null>(
+    null
+  );
+  const navigation = useNavigation<NavigationProp<any>>();
   const [openCategoryDropdown, setOpenCategoryDropdown] = useState(false);
+  const [selectedCategoryName, setSelectedCategoryName] = useState("");
+
   const [openSubCategoryDropdown, setOpenSubCategoryDropdown] = useState(false);
 
   const handleSearch = () => {
-    console.log("Selected category UUID:", selectedCategoryUuid);
-    console.log("Selected sub-category UUID:", selectedSubCategoryUuid);
-    if (selectedCategoryUuid && selectedSubCategoryUuid) {
-      navigation.navigate("ProductDetailsComponent", {
-        categoryUuid: selectedCategoryUuid,
-        subCategoryUuid: selectedSubCategoryUuid,
-      });
+    if (selectedCategory && selectedSubCategory) {
+      const params: ProductDetailsParams = {
+        categoryUuid: selectedCategory,
+        subCategoryUuid: selectedSubCategory,
+        selectedCategoryName: selectedCategoryName,
+      };
+      navigation.navigate("ProductDetailsComponent", params);
     } else {
       console.error("You must select both a category and a sub-category.");
     }
@@ -39,10 +48,13 @@ export default function CategorySelection() {
       );
       const categories = response.data.context.MAPP_PRODUCTS.result.categories;
 
-      const formattedCategories = categories.map((category) => ({
+      const formattedCategories = categories.map((category: any) => ({
         label: category.name,
         value: category.uuid,
-        subCategories: category.sub_categories,
+        subCategories: category.sub_categories.map((subCat: any) => ({
+          label: subCat.name,
+          value: subCat.uuid,
+        })),
       }));
 
       setCategories(formattedCategories);
@@ -50,18 +62,11 @@ export default function CategorySelection() {
       if (formattedCategories.length > 0) {
         const initialCategory = formattedCategories[0];
         setSelectedCategory(initialCategory.value);
-        setSelectedCategoryUuid(initialCategory.value);
-
+        setSelectedCategoryName(initialCategory.label);
         if (initialCategory.subCategories.length > 0) {
           const initialSubCategory = initialCategory.subCategories[0];
-          setSubCategories(
-            initialCategory.subCategories.map((subCat) => ({
-              label: subCat.name,
-              value: subCat.uuid,
-            }))
-          );
+          setSubCategories(initialCategory.subCategories);
           setSelectedSubCategory(initialSubCategory.value);
-          setSelectedSubCategoryUuid(initialSubCategory.value);
         }
       }
     } catch (error) {
@@ -71,13 +76,19 @@ export default function CategorySelection() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>e-Καταναλωτής</Text>
+      <View style={styles.header}>
+        <Feather name="shopping-cart" size={34} color="white" />
+        <Text style={{ fontSize: 22, color: "white", fontWeight: "500" }}>
+          e-Καταναλωτής
+        </Text>
+      </View>
       <Text style={styles.description}>
         Βρείτε την χαμηλότερη τιμή και εξοικονομήστε χρήματα! Συγκρίνετε τιμές
         σε εκατοντάδες προϊόντα, δημιουργήστε το δικό σας καλάθι και βρείτε σε
         ποια αλυσίδα supermarket είναι το φθηνότερο!
       </Text>
       <View style={{ zIndex: 1000 }}>
+        <Text style={styles.categoriesText}>Ανά Κατηγορία</Text>
         <DropDownPicker
           open={openCategoryDropdown}
           value={selectedCategory}
@@ -89,22 +100,14 @@ export default function CategorySelection() {
           style={{ backgroundColor: "#ffffff" }}
           dropDownContainerStyle={{ backgroundColor: "#ffffff" }}
           onChangeValue={(value) => {
-            setSelectedCategoryUuid(value);
+            setSelectedCategory(value as number);
             const selectedCat = categories.find((cat) => cat.value === value);
             if (selectedCat && selectedCat.subCategories) {
-              const formattedSubCategories = selectedCat.subCategories.map(
-                (subCat) => ({
-                  label: subCat.name,
-                  value: subCat.uuid,
-                })
-              );
-              setSubCategories(formattedSubCategories);
-              if (formattedSubCategories.length > 0) {
-                setSelectedSubCategory(formattedSubCategories[0].value);
-                setSelectedSubCategoryUuid(formattedSubCategories[0].value);
+              setSubCategories(selectedCat.subCategories);
+              if (selectedCat.subCategories.length > 0) {
+                setSelectedSubCategory(selectedCat.subCategories[0].value);
               } else {
                 setSelectedSubCategory(null);
-                setSelectedSubCategoryUuid(null);
               }
             }
           }}
@@ -112,6 +115,7 @@ export default function CategorySelection() {
       </View>
       {selectedCategory && subCategories.length > 0 && (
         <View style={{ zIndex: 500 }}>
+          <Text style={styles.categoriesText}>Ανά Υποκατηγορία</Text>
           <DropDownPicker
             open={openSubCategoryDropdown}
             value={selectedSubCategory}
@@ -123,7 +127,7 @@ export default function CategorySelection() {
             style={{ backgroundColor: "#ffffff" }}
             dropDownContainerStyle={{ backgroundColor: "#ffffff" }}
             onChangeValue={(value) => {
-              setSelectedSubCategoryUuid(value);
+              setSelectedSubCategory(value as number);
             }}
           />
         </View>
@@ -147,11 +151,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#F7543E",
   },
   header: {
-    fontSize: 20,
-    fontWeight: "bold",
     marginBottom: 10,
-    textAlign: "center",
-    color: "white",
+    gap: 10,
+    display: "flex",
+    justifyContent: "center",
+    flexDirection: "row",
+    alignItems: "center",
   },
   description: {
     fontSize: 14,
@@ -169,16 +174,23 @@ const styles = StyleSheet.create({
     padding: 15,
     alignItems: "center",
     marginTop: 20,
-    borderRadius: 5,
+    borderRadius: 20,
   },
   buttonText: {
     color: "white",
     fontSize: 16,
+    fontWeight: "600",
   },
   footer: {
     fontSize: 12,
     color: "white",
     textAlign: "center",
     marginTop: 20,
+  },
+  categoriesText: {
+    color: "white",
+    margin: 5,
+    fontSize: 17,
+    fontWeight: "600",
   },
 });
