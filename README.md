@@ -13,6 +13,7 @@ Node.js (LTS version recommended)
 Clone the repository:
 
 git clone https://github.com/paulosvel/e-commerce-app
+
 cd e-commerce-app
 
 Install dependencies:
@@ -27,6 +28,8 @@ npx expo start or npm start
 
 Here are some screenshots of the app in action:
 
-<img src="app_imgs/first_screen.png" alt="First Screen" width="200">
-<img src="app_imgs/second_screen.png" alt="Second Screen" width="200">
-<img src="app_imgs/third_screen.png" alt="Third Screen" width="200">
+<div style="display: flex; flex-direction: row; gap: 10px;">
+    <img src="app_imgs/first_screen.png" alt="First Screen" width="200">
+    <img src="app_imgs/second_screen.png" alt="Second Screen" width="200">
+    <img src="app_imgs/third_screen.png" alt="Third Screen" width="200">
+</div>
