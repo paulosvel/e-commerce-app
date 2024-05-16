@@ -12,6 +12,6 @@ npx create-expo-app -e with-router
 
 - [Expo Router: Docs](https://docs.expo.dev/router/introduction/)
 
-![Alt text](app_imgs/first_screen.png)
-![Alt text](app_imgs/second_screen.png)
-![Alt text](app_imgs/third_screen.png)
+<img src="app_imgs/first_screen.png" alt="First Screen" width="300">
+<img src="app_imgs/second_screen.png" alt="Second Screen" width="300">
+<img src="app_imgs/third_screen.png" alt="Third Screen" width="300">
