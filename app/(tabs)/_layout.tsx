@@ -5,6 +5,7 @@ import { Entypo } from "@expo/vector-icons";
 import { Ionicons } from "@expo/vector-icons";
 import { Feather } from "@expo/vector-icons";
 import { FontAwesome5 } from "@expo/vector-icons";
+import HomeStack from "../../navigators/gridNavigator";
 const Tab = createBottomTabNavigator();
 
 export default function TabLayout() {
@@ -15,8 +16,8 @@ export default function TabLayout() {
       }}
     >
       <Tab.Screen
-        name="CategorySelection"
-        component={CategorySelection}
+        name="Home"
+        component={HomeStack}
         options={{
           title: "Αρχική",
           headerShown: false,
@@ -36,7 +37,7 @@ export default function TabLayout() {
         }}
       />
       <Tab.Screen
-        name="Test"
+        name="Test2"
         component={CategorySelection}
         options={{
           tabBarLabel: "",
@@ -46,7 +47,7 @@ export default function TabLayout() {
         }}
       />
       <Tab.Screen
-        name="Test"
+        name="Test3"
         component={CategorySelection}
         options={{
           tabBarLabel: "",
@@ -57,7 +58,7 @@ export default function TabLayout() {
         }}
       />
       <Tab.Screen
-        name="Test"
+        name="Test4"
         component={CategorySelection}
         options={{
           tabBarLabel: "",
