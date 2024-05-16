@@ -28,7 +28,7 @@ npx expo start or npm start
 
 Here are some screenshots of the app in action:
 
-<div style="display: flex; flex-direction: row; gap: 10px;">
+<div style="display: flex; flex-direction: row; gap: 40px;">
     <img src="app_imgs/first_screen.png" alt="First Screen" width="200">
     <img src="app_imgs/second_screen.png" alt="Second Screen" width="200">
     <img src="app_imgs/third_screen.png" alt="Third Screen" width="200">
