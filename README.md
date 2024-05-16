@@ -11,3 +11,7 @@ npx create-expo-app -e with-router
 ## 📝 Notes
 
 - [Expo Router: Docs](https://docs.expo.dev/router/introduction/)
+
+![Alt text](app_imgs/first_screen.png)
+![Alt text](app_imgs/second_screen.png)
+![Alt text](app_imgs/third_screen.png)
