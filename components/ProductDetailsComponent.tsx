@@ -32,9 +32,17 @@ export default function ProductDetailsComponent({ route }) {
 
         setMerchants(data.merchants);
         setAllProducts(data.products);
-        filterProducts(data.products);
 
-        // Extract sub_sub_categories based on the provided structure
+        const initialFilteredProducts = data.products.filter((product) => {
+          return (
+            product.category?.includes(parseInt(categoryUuid)) &&
+            (!subCategoryUuid ||
+              product.category.includes(parseInt(subCategoryUuid)))
+          );
+        });
+
+        setProducts(initialFilteredProducts);
+
         const subCategoriesData = data.categories.find(
           (category) => category.uuid === parseInt(categoryUuid)
         )?.sub_categories;
@@ -59,8 +67,8 @@ export default function ProductDetailsComponent({ route }) {
   }, [categoryUuid, subCategoryUuid]);
 
   useEffect(() => {
-    filterProducts(allProducts);
-  }, [selectedMerchant, selectedSubSubCategories, allProducts]);
+    applyFilters();
+  }, [selectedMerchant, selectedSubSubCategories]);
 
   const toggleMerchant = (merchantUuid) => {
     if (selectedMerchant.includes(merchantUuid)) {
@@ -99,11 +107,10 @@ export default function ProductDetailsComponent({ route }) {
     return minPrice.toFixed(2);
   };
 
-  const filterProducts = (productsToFilter) => {
-    const filteredProducts = productsToFilter.filter((product) => {
+  const applyFilters = () => {
+    const filteredProducts = allProducts.filter((product) => {
       const isInCategory =
-        Array.isArray(product.category) &&
-        product.category.includes(parseInt(categoryUuid)) &&
+        product.category?.includes(parseInt(categoryUuid)) &&
         (!subCategoryUuid ||
           product.category.includes(parseInt(subCategoryUuid)));
 
@@ -116,10 +123,8 @@ export default function ProductDetailsComponent({ route }) {
 
       const isInSubSubCategory =
         selectedSubSubCategories.length > 0
-          ? product.sub_categories?.some((subCat) =>
-              subCat.sub_sub_categories?.some((subSubCat) =>
-                selectedSubSubCategories.includes(subSubCat.uuid)
-              )
+          ? product.category?.some((categoryId) =>
+              selectedSubSubCategories.includes(categoryId)
             )
           : true;
 
@@ -253,7 +258,10 @@ export default function ProductDetailsComponent({ route }) {
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.resultsButton}
-                onPress={() => setModalVisible(false)}
+                onPress={() => {
+                  setModalVisible(false);
+                  applyFilters();
+                }}
               >
                 <Text style={styles.resultsButtonText}>Αποτελέσματα</Text>
               </TouchableOpacity>
